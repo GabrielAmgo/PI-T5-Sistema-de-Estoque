@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager Pro | UNIVESP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-dark: #2c3e50; --accent: #3498db; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .stat-card { border-left: 5px solid var(--accent); }
+        .low-stock { background-color: #fff5f5 !important; border-left: 5px solid #e74c3c; }
+        .nav-pills .nav-link.active { background-color: var(--primary-dark); }
+        .nav-link { color: var(--primary-dark); font-weight: bold; }
+        /* Ajuste para o formulário inline não quebrar a linha */
+        .input-group-sm .form-control, .input-group-sm .form-select { font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h1 class="h3 text-primary"><i class="bi bi-box-seam"></i> Gestão UNIVESP</h1>
+        <ul class="nav nav-pills" id="pills-tab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-dash" onclick="atualizarTudo()">Dashboard</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-produtos" onclick="listarProdutosCRUD()">Produtos (CRUD)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-historico" onclick="carregarHistorico()">Histórico</button></li>
+        </ul>
+    </div>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tab-dash">
+            <div class="row mb-4">
+                <div class="col mb-3"><div class="card stat-card p-3" style="border-left-color: #2ecc71;"><small class="text-muted text-uppercase fw-bold">Vendas</small><h4 id="faturamento" class="mb-0 text-success">R$ 0,00</h4></div></div>
+                <div class="col mb-3"><div class="card stat-card p-3" style="border-left-color: #3498db;"><small class="text-muted text-uppercase fw-bold">Valor em Estoque</small><h4 id="valorEstoque" class="mb-0">R$ 0,00</h4></div></div>
+                <div class="col mb-3"><div class="card stat-card p-3"><small class="text-muted text-uppercase fw-bold">Investimento</small><h4 id="valorCusto" class="mb-0">R$ 0,00</h4></div></div>
+                <div class="col mb-3"><div class="card stat-card p-3" style="border-left-color: #f1c40f;"><small class="text-muted text-uppercase fw-bold">Produtos</small><h4 id="totalItens" class="mb-0">0</h4></div></div>
+                <div class="col mb-3"><div class="card stat-card p-3" style="border-left-color: #e74c3c;"><small class="text-muted text-uppercase fw-bold">Abaixo do Mín.</small><h4 id="alertasEstoque" class="mb-0 text-danger">0</h4></div></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0">Estoque Atual</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="atualizarTudo()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Produto</th>
+                            <th>Qtd. Atual</th>
+                            <th>Preço Venda</th>
+                            <th class="text-center" style="width: 350px;">Nova Movimentação</th>
+                        </tr>
+                        </thead>
+                        <tbody id="corpoTabelaDash"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-produtos">
+            <div class="card p-4 mb-4">
+                <h5 class="mb-3">Cadastrar / Editar Produto</h5>
+                <form id="formProduto" class="row g-3">
+                    <input type="hidden" id="prodId">
+                    <div class="col-md-4"><label class="form-label">Nome</label><input type="text" id="prodNome" class="form-control" required></div>
+                    <div class="col-md-2"><label class="form-label">Custo (R$)</label><input type="number" id="prodCusto" class="form-control" step="0.01" required></div>
+                    <div class="col-md-2"><label class="form-label">Venda (R$)</label><input type="number" id="prodVenda" class="form-control" step="0.01" required></div>
+                    <div class="col-md-2"><label class="form-label">Estoque Mín.</label><input type="number" id="prodMin" class="form-control" required></div>
+                    <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-success w-100">Salvar</button></div>
+                </form>
+            </div>
+            <div class="card"><div class="table-responsive"><table class="table mb-0"><thead class="table-light"><tr><th>ID</th><th>Nome</th><th>Ações</th></tr></thead><tbody id="corpoTabelaProdutos"></tbody></table></div></div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-historico">
+            <div class="card"><div class="card-header bg-white fw-bold py-3">Log de Transações</div><div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th class="ps-3">Data</th><th>Produto</th><th>Tipo</th><th>Qtd</th><th>Motivo</th></tr></thead><tbody id="corpoHistorico"></tbody></table></div></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API = window.location.origin + '/api';
+
+    async function atualizarTudo() {
+        try {
+            const [pRes, rRes] = await Promise.all([fetch(API+'/produtos'), fetch(API+'/relatorios/resumo-financeiro')]);
+            const produtos = await pRes.json();
+            const resumo = await rRes.json();
+
+            document.getElementById('valorCusto').innerText = `R$ ${resumo.valorInvestidoCusto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('valorEstoque').innerText = `R$ ${resumo.valorEmEstoqueVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('faturamento').innerText = `R$ ${resumo.faturamentoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('totalItens').innerText = resumo.totalItens;
+
+            const corpo = document.getElementById('corpoTabelaDash');
+            corpo.innerHTML = '';
+            let alertas = 0;
+            produtos.forEach(p => {
+                const isLow = p.quantidadeEstoque <= p.estoqueMinimo;
+                if(isLow) alertas++;
+                corpo.innerHTML += `
+                    <tr class="${isLow ? 'low-stock' : ''}">
+                        <td class="ps-4"><strong>${p.nome}</strong></td>
+                        <td>${p.quantidadeEstoque} <small class="text-muted">(Min: ${p.estoqueMinimo})</small></td>
+                        <td>R$ ${p.precoVenda.toFixed(2)}</td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="qtd-${p.id}" class="form-control" value="1" min="1" style="max-width: 70px;">
+                                <select id="tipo-${p.id}" class="form-select">
+                                    <option value="SAIDA">Venda (-)</option>
+                                    <option value="ENTRADA">Compra (+)</option>
+                                </select>
+                                <button class="btn btn-primary" onclick="confirmarMovimentacao(${p.id})">Confirmar</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('alertasEstoque').innerText = alertas;
+        } catch (e) { console.error(e); }
+    }
+
+    async function confirmarMovimentacao(id) {
+        const qtd = document.getElementById(`qtd-${id}`).value;
+        const tipo = document.getElementById(`tipo-${id}`).value;
+        const payload = {
+            produtoId: id,
+            quantidade: parseInt(qtd),
+            tipo: tipo,
+            motivo: 'Dashboard Inline'
+        };
+
+        const res = await fetch(API+'/estoque/movimentar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if(!res.ok) {
+            const msg = await res.text();
+            alert("Erro: " + msg);
+        } else {
+            atualizarTudo();
+        }
+    }
+
+    // CRUD e HISTÓRICO (Mantendo as funções anteriores)
+    async function listarProdutosCRUD() {
+        const res = await fetch(API+'/produtos');
+        const produtos = await res.json();
+        document.getElementById('corpoTabelaProdutos').innerHTML = produtos.map(p => `<tr><td>${p.id}</td><td>${p.nome}</td><td>
+            <button class="btn btn-sm btn-warning" onclick='prepararEdicao(${JSON.stringify(p)})'>Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deletarProduto(${p.id})">Excluir</button>
+        </td></tr>`).join('');
+    }
+
+    document.getElementById('formProduto').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('prodId').value;
+        const payload = {
+            nome: document.getElementById('prodNome').value,
+            precoCusto: document.getElementById('prodCusto').value,
+            precoVenda: document.getElementById('prodVenda').value,
+            estoqueMinimo: document.getElementById('prodMin').value,
+            quantidadeEstoque: 0
+        };
+        await fetch(id ? `${API}/produtos/${id}` : API+'/produtos', {
+            method: id ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        });
+        e.target.reset(); document.getElementById('prodId').value = '';
+        listarProdutosCRUD();
+    };
+
+    function prepararEdicao(p) {
+        document.getElementById('prodId').value = p.id;
+        document.getElementById('prodNome').value = p.nome;
+        document.getElementById('prodCusto').value = p.precoCusto;
+        document.getElementById('prodVenda').value = p.precoVenda;
+        document.getElementById('prodMin').value = p.estoqueMinimo;
+    }
+
+    async function deletarProduto(id) { if(confirm('Excluir?')) { await fetch(`${API}/produtos/${id}`, {method: 'DELETE'}); listarProdutosCRUD(); } }
+
+    async function carregarHistorico() {
+        const res = await fetch(API+'/estoque/historico');
+        if(!res.ok) return;
+        const lista = await res.json();
+        document.getElementById('corpoHistorico').innerHTML = lista.map(m => `<tr><td class="ps-3">${new Date(m.dataHora).toLocaleString()}</td>
+            <td>${m.produto?m.produto.nome:'Removido'}</td><td class="${m.tipo=='ENTRADA'?'text-success':'text-danger'}"><strong>${m.tipo}</strong></td>
+            <td>${m.quantidade}</td><td>${m.motivo || '-'}</td></tr>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', atualizarTudo);
+</script>
+</body>
+</html>

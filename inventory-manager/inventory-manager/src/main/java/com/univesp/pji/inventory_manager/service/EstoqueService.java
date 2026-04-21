@@ -30,7 +30,7 @@ public class EstoqueService {
             produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() + quantidade);
         } else {
             if (produto.getQuantidadeEstoque() < quantidade) {
-                throw new RuntimeException("Stock insuficiente para esta saída");
+                throw new RuntimeException("Quantidade insuficiente para esta saída");
             }
             produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - quantidade);
         }

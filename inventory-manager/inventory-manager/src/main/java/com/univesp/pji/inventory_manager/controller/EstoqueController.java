@@ -1,9 +1,11 @@
 package com.univesp.pji.inventory_manager.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.univesp.pji.inventory_manager.model.MovimentacaoEstoque;
 import com.univesp.pji.inventory_manager.model.TipoMovimentacao;
+import com.univesp.pji.inventory_manager.repository.MovimentacaoRepository; // Adicione este import
 import com.univesp.pji.inventory_manager.service.EstoqueService;
 
 @RestController
@@ -20,11 +23,24 @@ public class EstoqueController {
     @Autowired
     private EstoqueService estoqueService;
 
+    @Autowired
+    private MovimentacaoRepository movimentacaoRepository; // Adicione a injeção do repositório
+
+    /**
+     * Endpoint para listar todas as movimentações gravadas no banco
+     * Resolve o erro 404 da aba Histórico
+     */
+    @GetMapping("/historico")
+    public List<MovimentacaoEstoque> listarHistorico() {
+        return movimentacaoRepository.findAll();
+    }
+
     /**
      * Endpoint para registrar movimentações (Entrada/Saída)
      * Espera um JSON: { "produtoId": 1, "quantidade": 10, "tipo": "ENTRADA", "motivo": "Compra" }
      */
     @PostMapping("/movimentar")
+    @SuppressWarnings("UseSpecificCatch")
     public ResponseEntity<?> movimentar(@RequestBody Map<String, Object> payload) {
         try {
             Long produtoId = Long.valueOf(payload.get("produtoId").toString());
@@ -34,7 +50,7 @@ public class EstoqueController {
 
             MovimentacaoEstoque mov = estoqueService.registarMovimentacao(produtoId, quantidade, tipo, motivo);
             return ResponseEntity.ok(mov);
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

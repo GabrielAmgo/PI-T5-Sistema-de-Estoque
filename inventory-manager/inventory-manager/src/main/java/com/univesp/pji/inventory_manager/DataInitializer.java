@@ -1,4 +1,4 @@
-package com.univesp.pji.inventory_manager.config;
+package com.univesp.pji.inventory_manager;
 
 import java.math.BigDecimal;
 
@@ -51,6 +51,16 @@ public class DataInitializer implements CommandLineRunner {
             p1.setEmpresa(emp);
             p1.setCategoria(cat);
             produtoRepository.save(p1);
+
+            Produto p2 = new Produto();
+            p2.setNome("Fio de Cobre 2 mm");
+            p2.setPrecoCusto(new BigDecimal("2.00"));
+            p2.setPrecoVenda(new BigDecimal("5.00"));
+            p2.setQuantidadeEstoque(100);
+            p2.setEstoqueMinimo(10);
+            p2.setEmpresa(emp);
+            p2.setCategoria(cat);
+            produtoRepository.save(p2);
 
             System.out.println(">> Carga finalizada! Produtos criados.");
         }

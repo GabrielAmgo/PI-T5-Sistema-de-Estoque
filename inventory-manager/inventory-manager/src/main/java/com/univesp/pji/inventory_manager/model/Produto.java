@@ -2,6 +2,7 @@ package com.univesp.pji.inventory_manager.model;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -46,6 +47,7 @@ public class Produto {
     // Relacionamento com Empresa (conforme seu MER)
     @ManyToOne
     @JoinColumn(name = "empresa_id")
+    @JsonBackReference
     private Empresa empresa;
 
     @ManyToOne
